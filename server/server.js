@@ -22,7 +22,7 @@ io.on('connection', (socket) => {
             games[roomId] = { players: [], state: null };
         } else if (games[roomId].players.length == 2) {
             socket.emit("roomFull");
-            socket.leave();
+            socket.leave(roomId);
             return;
         }
         games[roomId].players.push(socket.id);
@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('select', ({ roomId, selection }) => {
-        io.to(roomId).emit('playerSelected', selection);
+        socket.to(roomId).emit('playerSelected', selection);
     });
 
     socket.on('playerLeave', roomId => {
@@ -52,8 +52,10 @@ io.on('connection', (socket) => {
         if (index !== -1) {
             games[roomId].players.splice(index, 1);
             io.to(roomId).emit('playerLeft');
-            if (games[roomId].players.length === 0) {
-                delete games[roomId]; // Clean up empty games
+            for(let rmid in games) {
+                if (games[rmid].players.length === 0) {
+                    delete games[rmid]; // Clean up empty games
+                }
             }
         }
     });
