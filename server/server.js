@@ -10,10 +10,14 @@ const io = new Server(server);
 let games = {}; // Store game states by room ID
 
 // Serve static files (optional, if you want to serve the frontend from the server)
+app.use(express.static('../'));
+
 app.use(
-    express.static('../'),
     cors({
-        origin: "127.0.0.1"
+        origin: "*",
+        optionsSuccessStatus: 200,
+        methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+        preflightContinue: false
     })
 );
 
