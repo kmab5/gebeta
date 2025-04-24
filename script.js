@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const socket = io('https://gebeta-z1yt.onrender.com:11142'); // Connect to the backend server
+    const socket = io('https://gebeta-z1yt.onrender.com:10000'); // Connect to the backend server
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const resetButton = document.getElementById('reset-button');
     const rulesButton = document.getElementById('rules-button');
