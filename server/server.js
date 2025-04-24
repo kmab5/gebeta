@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -11,15 +10,6 @@ let games = {}; // Store game states by room ID
 
 // Serve static files (optional, if you want to serve the frontend from the server)
 app.use(express.static('../'));
-
-app.use(
-    cors({
-        origin: "*",
-        optionsSuccessStatus: 200,
-        methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
-        preflightContinue: false
-    })
-);
 
 // Handle socket connections
 io.on('connection', (socket) => {
