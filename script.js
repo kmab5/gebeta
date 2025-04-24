@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log(window.location.host);
+    console.log(window.location.port);
+    console.log(process.env.PORT);
     const socket = io('https://gebeta-z1yt.onrender.com:10000'); // Connect to the backend server
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const resetButton = document.getElementById('reset-button');
