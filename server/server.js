@@ -78,5 +78,5 @@ io.on('connection', (socket) => {
 // Start the server
 const PORT = 11142;
 server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on https://gebeta-z1yt.onrender.com:${PORT}`);
 });
