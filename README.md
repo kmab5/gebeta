@@ -1,10 +1,10 @@
-# Gebe'ta - Ethiopian Traditional Game
+# [Gebe'ta - Ethiopian Traditional Game](https://gebeta-z1yt.onrender.com/)
 
-Hey there! 👋 This is my take on the ancient Ethiopian game Gebe'ta (also known as Mancala). I built this as a fun weekend project to learn more about game development and try my hand at implementing some basic AI.
+Hey there! 👋 This is my take on the ancient Ethiopian game Gebe'ta (also known as Mancala in some parts of the world). I built this as a fun weekend project to learn more about game development and try my hand at implementing some basic AI.
 
 ## What's this game about?
 
-Gebe'ta is a "count and capture" game that's been played for centuries across Africa. It's super intuitive once you get the hang of it!
+Gebe'ta is a "count and capture" game that's been played for centuries across Ethiopia. It's super intuitive once you get the hang of it!
 
 ### Quick Rules
 
@@ -26,24 +26,14 @@ Gebe'ta is a "count and capture" game that's been played for centuries across Af
   - 🤯 Extreme - Will absolutely destroy you (probably)
 
 - **Dark mode** for late-night gaming sessions
-- **Helpful toasts** that tell you what's happening
+- **Helpful toasts 🥂** that tell you what's happening
 
 ## How to Play
 
-1. Just open the game and pick a mode!
+1. Just open the [game](https://gebeta-z1yt.onrender.com/) and pick a mode!
 2. For online play, enter any room code (your friend needs the same code)
 3. Click on your pits to move
 4. Have fun!
-
-## Setting Up Online Play
-
-If you want to play with a friend online:
-
-1. Go to the `server` folder
-2. Run `npm install`
-3. Start it with `node server.js`
-4. Select "Online PvP" in the game
-5. Share the room code with your friend
 
 ## About This Project
 
@@ -53,12 +43,12 @@ I built this to learn more about:
 - Socket.IO for real-time communication
 - Basic AI algorithms (the Extreme CPU uses a simplified minimax!)
 
-Feel free to fork it, break it, fix it, or improve it! This is just a hobby project so don't expect perfection 😉
+Feel free to fork it, break it, fix it, or improve it! This is just a hobby project so don't expect perfection 😁
 
 ## Credits
 
-Shoutout to Ethiopian culture for this awesome game that's been around for centuries! All the code is written by me with lots of ☕ and 🍕.
+Shoutout to Ethiopian culture!
 
 Enjoy!
 
-- kmab
+- kmab, Sami

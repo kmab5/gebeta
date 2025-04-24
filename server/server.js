@@ -29,6 +29,7 @@ io.on('connection', (socket) => {
 
         // Notify players in the room
         io.to(roomId).emit('playerJoined', games[roomId].players);
+        console.log(`Player ${socket.id} joined room ${roomId}.`);
 
         // Start the game if two players are connected
         if (games[roomId].players.length === 2) {
@@ -48,6 +49,7 @@ io.on('connection', (socket) => {
 
     socket.on('playerLeave', roomId => {
         socket.leave(roomId);
+        console.log(`Player ${socket.id} left room ${roomId}.`);
         const index = games[roomId].players.indexOf(socket.id);
         if (index !== -1) {
             games[roomId].players.splice(index, 1);
@@ -55,6 +57,7 @@ io.on('connection', (socket) => {
             for(let rmid in games) {
                 if (games[rmid].players.length === 0) {
                     delete games[rmid]; // Clean up empty games
+                    console.log(`Room ${rmid} deleted.`);
                 }
             }
         }
@@ -70,6 +73,7 @@ io.on('connection', (socket) => {
                 io.to(roomId).emit('playerLeft');
                 if (games[roomId].players.length === 0) {
                     delete games[roomId]; // Clean up empty games
+                    console.log(`Room ${roomId} deleted.`);
                 }
                 break;
             }
