@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gebe'ta</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600&family=Dosis:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+    <script src="./script.js" defer></script>
+</head>
+<body>
+    <div class="game-container">
+        <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        <p id="current-turn" class="turn-indicator">Current Turn: Player 1 (P1)</p>
+        <table class="game-board">
+            <thead>
+                <tr>
+                    <th>
+                        <button id="rules-button" class="icon-button" title="Show Rules">
+                            <img src="./assets/gebeta.svg" alt="❓">
+                        </button>
+                    </th>
+                    <th colspan="6">Playground</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>P1</td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="score" id="score-p1">0</td>
+                </tr>
+                <tr>
+                    <td>P2</td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="cell"></td>
+                    <td class="score" id="score-p2">0</td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="reset-button">Reset Game</button>
+    </div>
+    <div id="toast-container"></div>
+    <div id="game-mode-modal" class="modal">
+        <div class="modal-content">
+            <span id="selection" class="">
+                <h2>Select Game Mode</h2>
+                <button id="pvp-mode" class="game-mode-button">Offline PvP</button>
+                <button id="online-pvp-mode" class="game-mode-button">Online PvP</button>
+                <button id="cpu-mode" class="game-mode-button">Player vs CPU</button>
+                <div id="difficulty-selection" class="hidden">
+                    <h3>Select CPU Difficulty</h3>
+                    <button class="difficulty-button" data-difficulty="easy">Easy</button>
+                    <button class="difficulty-button" data-difficulty="medium">Medium</button>
+                    <button class="difficulty-button" data-difficulty="hard">Hard</button>
+                    <button class="difficulty-button" data-difficulty="extreme">Extreme</button>
+                </div>
+            </span>
+            <span id="player_select" class="hidden">
+                <h2>Select Your Turn</h2>
+                <button id="p1-mode" class="game-mode-button" data-player="P1">P1</button>
+                <button id="p2-mode" class="game-mode-button" data-player="P2">P2</button>
+            </span>
+        </div>
+    </div>
+</body>
+</html>
