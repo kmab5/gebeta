@@ -72,7 +72,6 @@ function beginGame({ mode, startingSeat = 0, difficulty, humanSeat = 0, names, s
 
   app.board.setLabels(app.names);
   app.board.viewSeat = mode === 'local' ? null : humanSeat;
-  app.board.opts.preview = prefs.data.preview;
   app.board.render(app.state);
   app.board._rects = null;
 
@@ -410,7 +409,6 @@ function startDemo() {
     app.demo = new Board(host, {
       interactive: false,
       sound: false,
-      preview: false,
       speed: 1.25,
       labels: ['', ''],
     });
@@ -465,7 +463,6 @@ function applyPrefs() {
   document.documentElement.dataset.theme = p.theme;
   sfx.setEnabled(p.sound);
   $('#set-sound')?.setAttribute('aria-checked', String(p.sound));
-  $('#set-preview')?.setAttribute('aria-checked', String(p.preview));
   $$('[data-speed]').forEach((b) => b.classList.toggle('is-on', b.dataset.speed === p.speed));
   $$('[data-theme-set]').forEach((b) => b.classList.toggle('is-on', b.dataset.themeSet === p.theme));
   $('#btn-sound')?.firstElementChild?.firstElementChild?.setAttribute(
@@ -474,7 +471,6 @@ function applyPrefs() {
   );
   if (app.board) {
     app.board.opts.sound = p.sound;
-    app.board.opts.preview = p.preview;
     app.board.opts.speed = SPEEDS[p.speed] ?? 1;
   }
   if ($('#online-name') && p.name) $('#online-name').value = p.name;
@@ -599,11 +595,6 @@ function wire() {
 
   // settings
   $('#set-sound').addEventListener('click', () => toggleSound());
-  $('#set-preview').addEventListener('click', (e) => {
-    const on = e.currentTarget.getAttribute('aria-checked') !== 'true';
-    prefs.set('preview', on);
-    applyPrefs();
-  });
   $$('[data-speed]').forEach((b) =>
     b.addEventListener('click', () => {
       prefs.set('speed', b.dataset.speed);
@@ -658,7 +649,6 @@ function hint() {
   const pit = suggestMove(app.state);
   if (pit == null) return;
   app.board.flashHint(pit);
-  app.board.showPreview(pit);
 }
 
 function onKey(e) {
@@ -692,7 +682,6 @@ function boot() {
   app.board = new Board($('#board'), {
     interactive: true,
     sound: prefs.data.sound,
-    preview: prefs.data.preview,
     speed: SPEEDS[prefs.data.speed] ?? 1,
   });
   app.board.onPlay = (pit) => commit(pit);

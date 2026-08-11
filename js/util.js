@@ -32,7 +32,6 @@ const KEY = 'gebeta:prefs:v2';
 export const prefs = {
   data: {
     sound: true,
-    preview: true,
     speed: 'normal',
     theme: 'night',
     name: '',

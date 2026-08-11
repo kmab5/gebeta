@@ -10,7 +10,7 @@
  * which is why interactivity and sound are options rather than assumptions.
  */
 
-import { PITS, ROW, ownerOf, applyMove, TOTAL_STONES } from './engine.js';
+import { PITS, ROW, ownerOf, TOTAL_STONES } from './engine.js';
 import { el, wait, seeded, clamp, prefersReducedMotion } from './util.js';
 import * as sfx from './sfx.js';
 
@@ -47,7 +47,6 @@ export class Board {
     this.opts = {
       interactive: true,
       sound: true,
-      preview: true,
       speed: 1,
       labels: ['Player 1', 'Player 2'],
       ...opts,
@@ -108,20 +107,6 @@ export class Board {
       this.root.addEventListener('pointerdown', () => {
         if (this.busy) this.skip = true;
       });
-      this.root.addEventListener('pointerover', (e) => {
-        const btn = e.target.closest('.pit');
-        if (btn) this.showPreview(Number(btn.dataset.pit));
-      });
-      this.root.addEventListener('pointerout', (e) => {
-        if (!e.relatedTarget || !this.root.contains(e.relatedTarget)) this.clearPreview();
-        else if (e.target.closest('.pit') && !e.relatedTarget.closest?.('.pit'))
-          this.clearPreview();
-      });
-      this.root.addEventListener('focusin', (e) => {
-        const btn = e.target.closest('.pit');
-        if (btn) this.showPreview(Number(btn.dataset.pit));
-      });
-      this.root.addEventListener('focusout', () => this.clearPreview());
       window.addEventListener('resize', () => {
         this._rects = null;
       });
@@ -134,9 +119,7 @@ export class Board {
     b.type = 'button';
     b.innerHTML =
       '<span class="pit__well"><span class="pit__stones"></span></span>' +
-      '<span class="pit__count">0</span>' +
-      '<span class="pit__pips"></span>' +
-      '<span class="pit__tag"></span>';
+      '<span class="pit__count">0</span>';
     this.pitEls[i] = b;
     this.wells[i] = b.querySelector('.pit__well');
     return b;
@@ -380,7 +363,6 @@ export class Board {
     this.busy = true;
     this.skip = false;
     this._opened = this.state ? this.state.opened.slice() : new Array(PITS).fill(false);
-    this.clearPreview();
     this._measure();
     this._paintTurn();
 
@@ -535,75 +517,6 @@ export class Board {
     void running;
   }
 
-  /* -------------------------------------------------------------- preview */
-
-  showPreview(pit) {
-    if (!this.opts.preview || this.busy || !this.state || this.state.over) return;
-    if (ownerOf(pit) !== this.state.turn || this.state.pits[pit] === 0) return;
-    if (this.viewSeat != null && this.viewSeat !== this.state.turn) return;
-
-    const res = applyMove(this.state, pit);
-    if (!res.ok) return;
-
-    const drops = new Array(PITS).fill(0);
-    const takes = new Array(PITS).fill(0);
-    let gain = 0;
-    let laps = 0;
-    for (const ev of res.events) {
-      if (ev.t === 'sow') drops[ev.pit]++;
-      else if (ev.t === 'capture' && ev.seat === this.state.turn) {
-        takes[ev.pit] += ev.amount;
-        gain += ev.amount;
-      } else if (ev.t === 'relay') laps++;
-    }
-    const end = res.events.find((e) => e.t === 'endturn');
-    const swept = res.events.find((e) => e.t === 'sweep');
-
-    this.clearPreview();
-    this.root.classList.add('is-previewing');
-    this.pitEls[pit].classList.add('is-source');
-
-    for (let i = 0; i < PITS; i++) {
-      if (!drops[i] && !takes[i]) continue;
-      const b = this.pitEls[i];
-      b.classList.add('is-onpath');
-      if (takes[i]) b.classList.add('is-target');
-      const pips = b.querySelector('.pit__pips');
-      const shown = Math.min(drops[i], 5);
-      pips.innerHTML = '<i></i>'.repeat(shown) + (drops[i] > shown ? `<b>+${drops[i] - shown}</b>` : '');
-      if (takes[i]) b.querySelector('.pit__tag').textContent = `+${takes[i]}`;
-    }
-
-    const parts = [];
-    if (gain) parts.push(`takes ${gain}`);
-    if (laps) parts.push(`${laps} more ${laps === 1 ? 'lap' : 'laps'}`);
-    if (swept) parts.push(swept.seat === this.state.turn ? `sweeps ${swept.amount}` : `gives up ${swept.amount}`);
-    else if (end) parts.push('then their turn');
-    this._chip(pit, parts.join(' · ') || 'no gain', gain > 0);
-  }
-
-  _chip(pit, text, good) {
-    const c = this._geo().centers[pit];
-    const chip = el('div', `chip ${good ? 'chip--good' : ''}`, text);
-    const away = ownerOf(pit) === 0 ? 1 : -1;
-    chip.style.left = c.x + 'px';
-    chip.style.top = c.y + away * c.h * 0.95 + 'px';
-    this.fx.appendChild(chip);
-    this._chipEl = chip;
-  }
-
-  clearPreview() {
-    this.root.classList.remove('is-previewing');
-    for (const b of this.pitEls) {
-      if (!b) continue;
-      b.classList.remove('is-onpath', 'is-target', 'is-source');
-      b.querySelector('.pit__pips').innerHTML = '';
-      b.querySelector('.pit__tag').textContent = '';
-    }
-    this._chipEl?.remove();
-    this._chipEl = null;
-  }
-
   flashHint(pit) {
     if (pit == null) return;
     const b = this.pitEls[pit];
@@ -621,7 +534,6 @@ export class Board {
     if (ownerOf(pit) !== this.state.turn) return;
     if (this.viewSeat != null && this.viewSeat !== this.state.turn) return;
     if (this.state.pits[pit] === 0) return;
-    this.clearPreview();
     this.onPlay?.(pit);
   }
 
@@ -633,7 +545,6 @@ export class Board {
     for (const n of this.hand) n.remove();
     this.hand = [];
     this.fx.innerHTML = '';
-    this._chipEl = null;
   }
 
   destroy() {
