@@ -1,14 +1,16 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "gebeta-server",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Room server for Gebeta. Serves the static game and runs authoritative online matches.",
+  "type": "module",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "dependencies": {
     "express": "^5.1.0",
     "socket.io": "^4.8.1"

@@ -1,78 +1,311 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gebe'ta</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600&family=Dosis:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
-    <script src="./script.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#120e18">
+<title>Gebeta — ገበጣ</title>
+<meta name="description" content="Gebeta (ገበጣ), the Ethiopian count-and-capture game. Play a friend on one screen, online with a room code, or against a computer that reads ahead.">
+<meta property="og:title" content="Gebeta — ገበጣ">
+<meta property="og:description" content="The Ethiopian count-and-capture game, in your browser. Pass and play, online rooms, or four grades of computer opponent.">
+<meta property="og:type" content="website">
+
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;600;800&family=Noto+Serif+Ethiopic:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/app.css">
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<script type="module" src="./js/app.js"></script>
 </head>
+
 <body>
-    <div class="game-container">
-        <button id="dark-mode-toggle">Toggle Dark Mode</button>
-        <p id="current-turn" class="turn-indicator">Current Turn: Player 1 (P1)</p>
-        <table class="game-board">
-            <thead>
-                <tr>
-                    <th>
-                        <button id="rules-button" class="icon-button" title="Show Rules">
-                            <img src="./assets/gebeta.svg" alt="❓">
-                        </button>
-                    </th>
-                    <th colspan="6">Playground</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>P1</td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="score" id="score-p1">0</td>
-                </tr>
-                <tr>
-                    <td>P2</td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="cell"></td>
-                    <td class="score" id="score-p2">0</td>
-                </tr>
-            </tbody>
-        </table>
-        <button id="reset-button">Reset Game</button>
+<!-- icon sprite ---------------------------------------------------------- -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.2 12 4l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.6 6.6a7.6 7.6 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2-2.6 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8m15.1-6.5-1.7 1.7M7.6 16.4l-1.7 1.7m12 0-1.7-1.7M7.6 7.6 5.9 5.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 6.2A2.2 2.2 0 0 0 12.8 4H6.2A2.2 2.2 0 0 0 4 6.2v6.6A2.2 2.2 0 0 0 6.2 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.4 17.4a6 6 0 1 1 5.2 0v1.4a1.4 1.4 0 0 1-1.4 1.4h-2.4a1.4 1.4 0 0 1-1.4-1.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10.2 20.8h3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-again" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M20.5 3.6V9h-5.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11m0-11-11 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ambient lamp --------------------------------------------------------- -->
+<div class="lamp" aria-hidden="true"></div>
+
+<main id="app">
+
+<!-- ====================== HOME ====================== -->
+<section class="screen screen--home is-active" data-screen="home">
+  <div class="home__demo" id="home-demo" aria-hidden="true"></div>
+
+  <div class="home__inner">
+    <header class="brand">
+      <h1 class="brand__mark">
+        <span class="brand__amharic">ገበጣ</span>
+        <span class="brand__latin">Gebeta</span>
+      </h1>
+      <p class="brand__line">Twelve pits. Forty-eight stones. Take more than they do.</p>
+    </header>
+
+    <nav class="modes" aria-label="Game modes">
+      <button class="mode" data-go="setup-local">
+        <span class="mode__pips" aria-hidden="true"><i></i><i></i></span>
+        <span class="mode__name">Pass &amp; play</span>
+        <span class="mode__desc">Two players, one screen. Hand it over each turn.</span>
+      </button>
+      <button class="mode" data-go="setup-cpu">
+        <span class="mode__pips" aria-hidden="true"><i></i><i class="is-cpu"></i></span>
+        <span class="mode__name">Play the computer</span>
+        <span class="mode__desc">Four grades, from harmless to genuinely mean.</span>
+      </button>
+      <button class="mode" data-go="setup-online">
+        <span class="mode__pips" aria-hidden="true"><i></i><i class="is-far"></i></span>
+        <span class="mode__name">Play online</span>
+        <span class="mode__desc">Share a four-letter room code with a friend.</span>
+      </button>
+    </nav>
+
+    <div class="home__foot">
+      <button class="link-btn" data-open="rules">How it's played</button>
+      <span class="dot" aria-hidden="true">·</span>
+      <button class="link-btn" data-open="settings">Settings</button>
+      <span class="dot" aria-hidden="true">·</span>
+      <a class="link-btn" href="https://github.com/kmab5/gebeta" target="_blank" rel="noopener">Source</a>
     </div>
-    <div id="toast-container"></div>
-    <div id="game-mode-modal" class="modal">
-        <div class="modal-content">
-            <span id="selection" class="">
-                <h2>Select Game Mode</h2>
-                <button id="pvp-mode" class="game-mode-button">Offline PvP</button>
-                <button id="online-pvp-mode" class="game-mode-button">Online PvP</button>
-                <button id="cpu-mode" class="game-mode-button">Player vs CPU</button>
-                <div id="difficulty-selection" class="hidden">
-                    <h3>Select CPU Difficulty</h3>
-                    <button class="difficulty-button" data-difficulty="easy">Easy</button>
-                    <button class="difficulty-button" data-difficulty="medium">Medium</button>
-                    <button class="difficulty-button" data-difficulty="hard">Hard</button>
-                    <button class="difficulty-button" data-difficulty="extreme">Extreme</button>
-                </div>
-            </span>
-            <span id="player_select" class="hidden">
-                <h2>Select Your Turn</h2>
-                <button id="p1-mode" class="game-mode-button" data-player="P1">P1</button>
-                <button id="p2-mode" class="game-mode-button" data-player="P2">P2</button>
-            </span>
+  </div>
+</section>
+
+<!-- ====================== SETUP: LOCAL ====================== -->
+<section class="screen screen--setup" data-screen="setup-local">
+  <div class="panel">
+    <button class="ghost-btn panel__back" data-go="home"><svg><use href="#i-back"/></svg>Back</button>
+    <p class="eyebrow">Pass &amp; play</p>
+    <h2 class="panel__title">Who goes first?</h2>
+    <p class="panel__note">The board never rotates. Player&nbsp;1 owns the bottom row, Player&nbsp;2 the top.</p>
+    <div class="choice-row">
+      <button class="choice choice--south" data-start-local="0">
+        <span class="choice__tag">Player 1</span>
+        <span class="choice__sub">bottom row</span>
+      </button>
+      <button class="choice choice--north" data-start-local="1">
+        <span class="choice__tag">Player 2</span>
+        <span class="choice__sub">top row</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== SETUP: CPU ====================== -->
+<section class="screen screen--setup" data-screen="setup-cpu">
+  <div class="panel">
+    <button class="ghost-btn panel__back" data-go="home"><svg><use href="#i-back"/></svg>Back</button>
+    <p class="eyebrow">Play the computer</p>
+    <h2 class="panel__title">Pick your trouble</h2>
+    <div class="levels" id="level-list"></div>
+    <div class="panel__row">
+      <span class="field-label">You play</span>
+      <div class="seg" role="group" aria-label="Choose your side">
+        <button class="seg__btn is-on" data-cpu-seat="0">Bottom row, first</button>
+        <button class="seg__btn" data-cpu-seat="1">Top row, second</button>
+      </div>
+    </div>
+    <button class="primary-btn" id="start-cpu">Start the game</button>
+  </div>
+</section>
+
+<!-- ====================== SETUP: ONLINE ====================== -->
+<section class="screen screen--setup" data-screen="setup-online">
+  <div class="panel">
+    <button class="ghost-btn panel__back" data-go="home"><svg><use href="#i-back"/></svg>Back</button>
+    <p class="eyebrow">Play online</p>
+    <h2 class="panel__title">Open a room</h2>
+
+    <label class="field">
+      <span class="field-label">Your name</span>
+      <input id="online-name" class="input" maxlength="14" placeholder="Sami" autocomplete="nickname">
+    </label>
+
+    <div class="online-split">
+      <div class="online-col">
+        <button class="primary-btn" id="create-room">Create a room</button>
+        <p class="panel__note">You get a code. Send it to whoever you want to beat.</p>
+      </div>
+      <div class="online-or" aria-hidden="true"><span>or</span></div>
+      <div class="online-col">
+        <div class="join-row">
+          <input id="join-code" class="input input--code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" aria-label="Room code">
+          <button class="primary-btn primary-btn--alt" id="join-room">Join</button>
         </div>
+        <p class="panel__note">Four letters, case doesn't matter.</p>
+      </div>
     </div>
+
+    <p class="net-status" id="online-status" role="status"></p>
+  </div>
+</section>
+
+<!-- ====================== LOBBY ====================== -->
+<section class="screen screen--setup" data-screen="lobby">
+  <div class="panel panel--lobby">
+    <button class="ghost-btn panel__back" id="leave-lobby"><svg><use href="#i-back"/></svg>Leave room</button>
+    <p class="eyebrow">Room</p>
+    <div class="code-block">
+      <strong class="code" id="room-code">····</strong>
+      <button class="ghost-btn" id="copy-code"><svg><use href="#i-copy"/></svg>Copy invite</button>
+    </div>
+    <ol class="seat-list" id="seat-list"></ol>
+    <p class="net-status" id="lobby-status" role="status">Waiting for a second player.</p>
+  </div>
+</section>
+
+<!-- ====================== GAME ====================== -->
+<section class="screen screen--game" data-screen="game">
+  <header class="hud">
+    <button class="icon-btn" id="btn-home" title="Back to menu" aria-label="Back to menu"><svg><use href="#i-home"/></svg></button>
+    <div class="hud__center">
+      <p class="hud__turn" id="turn-line" aria-live="polite">Player 1 to move</p>
+      <p class="hud__hint" id="turn-sub"></p>
+    </div>
+    <div class="hud__tools">
+      <button class="icon-btn" id="btn-hint" title="Suggest a move" aria-label="Suggest a move"><svg><use href="#i-bulb"/></svg></button>
+      <button class="icon-btn" id="btn-sound" title="Sound" aria-label="Toggle sound"><svg><use href="#i-sound"/></svg></button>
+      <button class="icon-btn" data-open="rules" title="Rules" aria-label="Rules"><svg><use href="#i-help"/></svg></button>
+      <button class="icon-btn" data-open="settings" title="Settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="board" id="board"></div>
+  </div>
+
+  <footer class="tray">
+    <div class="tray__log" id="move-log" aria-live="polite"></div>
+    <div class="tray__emotes" id="emote-bar" hidden></div>
+  </footer>
+</section>
+
+</main>
+
+<!-- ====================== RESULT ====================== -->
+<div class="overlay" id="result" hidden>
+  <div class="result-card">
+    <p class="eyebrow" id="result-eyebrow">Final</p>
+    <h2 class="result__title" id="result-title">Player 1 wins</h2>
+    <div class="result__score" id="result-score"></div>
+    <p class="result__note" id="result-note"></p>
+    <div class="result__actions">
+      <button class="primary-btn" id="btn-again"><svg><use href="#i-again"/></svg>Play again</button>
+      <button class="ghost-btn" id="btn-lobby">Main menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== RULES ====================== -->
+<div class="overlay" id="rules" hidden>
+  <div class="sheet">
+    <button class="icon-btn sheet__close" data-close><svg><use href="#i-x"/></svg></button>
+    <p class="eyebrow">ገበጣ</p>
+    <h2 class="sheet__title">How it's played</h2>
+
+    <div class="rule">
+      <span class="rule__n">1</span>
+      <div>
+        <h3>Sow to your right</h3>
+        <p>Take every stone from one of your own pits and drop them one at a time into the pits ahead, going counter-clockwise. Your row runs into theirs and back around.</p>
+      </div>
+    </div>
+    <div class="rule">
+      <span class="rule__n">2</span>
+      <div>
+        <h3>A pit has to be opened before it pays</h3>
+        <p>Pits start closed — the dotted rim. A pit opens the moment you lift its stones. Only an open pit can be captured, so the first few turns are about opening ground.</p>
+        <div class="legend">
+          <span class="legend__item"><span class="legend__pit is-closed"></span> closed</span>
+          <span class="legend__item"><span class="legend__pit is-open"></span> open</span>
+        </div>
+      </div>
+    </div>
+    <div class="rule">
+      <span class="rule__n">3</span>
+      <div>
+        <h3>Four in an open pit is yours</h3>
+        <p>Drop a stone into an open pit and bring it to exactly four — you take all four, whichever side of the board it sits on. It counts mid-sow too, so one handful can pay several times.</p>
+      </div>
+    </div>
+    <div class="rule">
+      <span class="rule__n">4</span>
+      <div>
+        <h3>Land at home and go again</h3>
+        <p>If your last stone lands in your own row and that pit already had stones, scoop it up and keep sowing. The turn ends when you land in their row, land in one of your empty pits, or your last stone completes a capture.</p>
+      </div>
+    </div>
+    <div class="rule">
+      <span class="rule__n">5</span>
+      <div>
+        <h3>An empty row ends it</h3>
+        <p>When one row runs out, whoever still holds stones sweeps them all into their basket. Most stones wins. Forty-eight are in play, so twenty-five takes it.</p>
+      </div>
+    </div>
+
+    <p class="sheet__foot">Gebeta is played across Ethiopia and Eritrea in dozens of local variants — board sizes, capture counts and relay rules all shift from place to place. This is one common set.</p>
+  </div>
+</div>
+
+<!-- ====================== SETTINGS ====================== -->
+<div class="overlay" id="settings" hidden>
+  <div class="sheet sheet--narrow">
+    <button class="icon-btn sheet__close" data-close><svg><use href="#i-x"/></svg></button>
+    <p class="eyebrow">Settings</p>
+    <h2 class="sheet__title">Table setup</h2>
+
+    <div class="set-row">
+      <div><span class="set-row__name">Sound</span><span class="set-row__desc">Stone clicks and captures</span></div>
+      <button class="switch" id="set-sound" role="switch" aria-checked="true"><span></span></button>
+    </div>
+    <div class="set-row">
+      <div><span class="set-row__name">Move preview</span><span class="set-row__desc">Show where a handful lands before you commit</span></div>
+      <button class="switch" id="set-preview" role="switch" aria-checked="true"><span></span></button>
+    </div>
+    <div class="set-row">
+      <div><span class="set-row__name">Pace</span><span class="set-row__desc">How fast stones travel</span></div>
+      <div class="seg" role="group" aria-label="Animation pace">
+        <button class="seg__btn" data-speed="calm">Calm</button>
+        <button class="seg__btn is-on" data-speed="normal">Normal</button>
+        <button class="seg__btn" data-speed="quick">Quick</button>
+      </div>
+    </div>
+    <div class="set-row">
+      <div><span class="set-row__name">Light</span><span class="set-row__desc">Room around the board</span></div>
+      <div class="seg" role="group" aria-label="Theme">
+        <button class="seg__btn is-on" data-theme-set="night">Night</button>
+        <button class="seg__btn" data-theme-set="day">Day</button>
+      </div>
+    </div>
+    <p class="sheet__foot">Built by <a href="https://github.com/kmab5" target="_blank" rel="noopener">Sami</a>. Rules, bugs and better ideas welcome on the repo.</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- If the page is opened straight off the filesystem, ES modules never load.
+     Say so plainly instead of showing a dead menu. -->
+<div class="boot-warn" id="boot-warn" hidden>
+  <p><strong>The game engine didn't load.</strong> Browsers block JavaScript modules on <code>file://</code>. Serve the folder over http instead — <code>cd server &amp;&amp; npm install &amp;&amp; npm start</code>, or <code>npx serve</code> from the project root.</p>
+</div>
+<script>
+  setTimeout(function () {
+    if (!window.__gebetaBooted) document.getElementById('boot-warn').hidden = false;
+  }, 2500);
+</script>
 </body>
 </html>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 80" role="img" aria-label="Gebeta board mark">
+  <rect x="5" y="9" width="150" height="62" rx="18" fill="#4A2E1B"/>
+  <rect x="5" y="9" width="150" height="62" rx="18" fill="none" stroke="#7C4C2C" stroke-width="2"/>
+  <g fill="#180C05">
+    <circle cx="25" cy="28" r="8.5"/><circle cx="47" cy="28" r="8.5"/><circle cx="69" cy="28" r="8.5"/>
+    <circle cx="91" cy="28" r="8.5"/><circle cx="113" cy="28" r="8.5"/><circle cx="135" cy="28" r="8.5"/>
+    <circle cx="25" cy="52" r="8.5"/><circle cx="47" cy="52" r="8.5"/><circle cx="69" cy="52" r="8.5"/>
+    <circle cx="91" cy="52" r="8.5"/><circle cx="113" cy="52" r="8.5"/><circle cx="135" cy="52" r="8.5"/>
+  </g>
+  <circle cx="91" cy="52" r="8.5" fill="none" stroke="#F0A63A" stroke-width="2.5"/>
+  <g fill="#EDE3D0">
+    <circle cx="88" cy="49" r="2.6"/><circle cx="94" cy="50" r="2.6"/>
+    <circle cx="89" cy="55" r="2.6"/><circle cx="94.5" cy="55" r="2.6"/>
+  </g>
+  <circle cx="25" cy="28" r="8.5" fill="none" stroke="#7C86F0" stroke-width="2.5" stroke-dasharray="3 3"/>
+</svg>
