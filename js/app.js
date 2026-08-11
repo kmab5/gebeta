@@ -8,7 +8,7 @@
 import { createState, applyMove, legalMoves, ownerOf, ROW } from './engine.js';
 import { chooseMove, suggestMove, DIFFICULTIES } from './ai.js';
 import { Board, pitsInScreenOrder } from './board.js';
-import { Net } from './net.js';
+import { Online, savedServer, saveServer } from './net.js';
 import * as sfx from './sfx.js';
 import { $, $$, el, wait, prefs, toast, prefersReducedMotion } from './util.js';
 
@@ -37,6 +37,7 @@ function show(name) {
   document.body.dataset.screen = name;
   if (name === 'home') startDemo();
   else stopDemo();
+  if (name === 'setup-online') refreshTransport();
   const focusable = $(`.screen[data-screen="${name}"] button, .screen[data-screen="${name}"] input`);
   if (name !== 'game') focusable?.focus({ preventScroll: true });
 }
@@ -300,9 +301,20 @@ function netStatus(text, kind = '') {
   }
 }
 
+async function refreshTransport() {
+  const note = $('#transport-note');
+  if (!note) return;
+  note.textContent = 'Checking how to connect…';
+  try {
+    note.textContent = await ensureNet().describe();
+  } catch (err) {
+    note.textContent = err.message;
+  }
+}
+
 function ensureNet() {
   if (app.net) return app.net;
-  const net = new Net();
+  const net = new Online();
   app.net = net;
 
   net.on('slow', (m) => netStatus(m, 'wait'));
@@ -532,6 +544,14 @@ function wire() {
 
   // online
   $('#online-name').addEventListener('change', (e) => prefs.set('name', e.target.value.trim()));
+  const serverField = $('#server-url');
+  serverField.value = savedServer();
+  serverField.addEventListener('change', (e) => {
+    saveServer(e.target.value);
+    app.net?.dispose();
+    app.net = null;
+    refreshTransport();
+  });
   $('#create-room').addEventListener('click', async () => {
     const name = ($('#online-name').value || 'Player').trim().slice(0, 14);
     prefs.set('name', name);

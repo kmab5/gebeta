@@ -5,9 +5,15 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html, body {
+html {
   height: 100%;
+}
+
+body {
+  min-height: 100%;
   margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
@@ -17,7 +23,6 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
 }
 
 button, input { font: inherit; color: inherit; }
@@ -51,7 +56,11 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 }
 [data-theme='day'] .lamp::after { opacity: 0.18; }
 
-#app { position: relative; z-index: 1; height: 100%; }
+#app { position: relative; z-index: 1; min-height: 100dvh; }
+
+/* Only the game locks to the viewport — the board has to fit without
+   scrolling. Every other screen is free to grow and scroll. */
+.screen--game.is-active { height: 100dvh; max-height: 100dvh; overflow: hidden; }
 
 /* --- shared type -------------------------------------------------------- */
 
@@ -209,9 +218,9 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 
 /* --- screens ------------------------------------------------------------ */
 
-.screen { display: none; height: 100%; }
-.screen.is-active { display: flex; flex-direction: column; }
-.screen--setup { align-items: center; justify-content: center; padding: 5vh 4vw; overflow-y: auto; }
+.screen { display: none; }
+.screen.is-active { display: flex; flex-direction: column; min-height: 100dvh; }
+.screen--setup { align-items: center; justify-content: center; padding: 6vh 4vw; }
 .screen--setup.is-active, .screen--home.is-active { animation: rise var(--t-slow) var(--ease-out); }
 
 @keyframes rise {
@@ -221,7 +230,7 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 
 /* --- home --------------------------------------------------------------- */
 
-.screen--home { align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.screen--home { align-items: center; justify-content: center; position: relative; }
 
 .home__demo {
   position: absolute;
@@ -230,11 +239,13 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
   place-items: center;
   opacity: 0.16;
   filter: blur(1.5px) saturate(0.7);
-  transform: scale(1.25);
+  overflow: hidden;
   pointer-events: none;
   -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, #000 20%, transparent 75%);
   mask-image: radial-gradient(70% 60% at 50% 50%, #000 20%, transparent 75%);
 }
+
+.home__demo > .board { transform: scale(1.22); }
 
 .home__inner {
   position: relative;
@@ -411,6 +422,7 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 /* --- game chrome -------------------------------------------------------- */
 
 .screen--game { overflow: hidden; }
+.stage { overflow: hidden; }
 .hud {
   display: grid;
   grid-template-columns: 40px 1fr auto;
@@ -738,8 +750,8 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 
 .basket__vessel {
   position: relative;
-  width: calc(var(--pit-size) * 1.75);
-  height: calc(var(--pit-size) * 1.55);
+  width: calc(var(--pit-size) * 1.6);
+  height: calc(var(--pit-size) * 1.45);
   overflow: hidden;
   border-radius: 10px 10px 44% 44% / 8px 8px 34% 34%;
   background:
@@ -830,7 +842,9 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
   position: fixed;
   inset: 0;
   z-index: 60;
-  display: grid;
+  /* `display` must lose to [hidden]: a class beats the UA rule, which would
+     leave an invisible full-screen layer over the page eating every click. */
+  display: none;
   place-items: center;
   padding: 4vh 4vw;
   background: rgb(8 5 12 / 0.72);
@@ -839,7 +853,11 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
   transition: opacity var(--t-mid);
   overflow-y: auto;
 }
+.overlay:not([hidden]) { display: grid; }
 .overlay.is-open { opacity: 1; }
+/* Belt and braces: nothing catches a pointer until it has actually opened. */
+.overlay { pointer-events: none; }
+.overlay.is-open { pointer-events: auto; }
 .overlay > * { transform: translateY(16px) scale(0.98); transition: transform var(--t-slow) var(--ease-out); }
 .overlay.is-open > * { transform: none; }
 
@@ -983,7 +1001,8 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
 }
 
 @media (max-height: 620px) and (min-width: 821px) {
-  :root { --pit-size: clamp(44px, 8vh, 78px); }
+  :root { --pit-size: min(clamp(40px, 7.5vw, 78px), 11vh); }
+  .tray { display: none; }
 }
 
 /* ==========================================================================
@@ -1003,3 +1022,18 @@ a { color: var(--south); text-decoration-thickness: 1px; text-underline-offset: 
   .pit::after { border-width: 3px; }
   .mode, .level, .panel { border-color: var(--text-2); }
 }
+
+/* --- optional connection settings ---------------------------------------- */
+
+.advanced { margin-top: 1.4rem; border-top: 1px solid var(--line); padding-top: 0.9rem; }
+.advanced summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.advanced summary:hover { color: var(--text); }
+.advanced[open] summary { margin-bottom: 0.9rem; }
+.hint-line { margin: 0 0 0.9rem; font-size: 0.86rem; color: var(--text-2); }

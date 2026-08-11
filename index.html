@@ -11,6 +11,11 @@
 <meta property="og:description" content="The Ethiopian count-and-capture game, in your browser. Pass and play, online rooms, or four grades of computer opponent.">
 <meta property="og:type" content="website">
 
+<!-- Optional. Put a room-server URL here to force online play through it.
+     Left empty, the game checks its own origin and otherwise connects
+     browser to browser. Nothing is hardcoded. -->
+<meta name="gebeta-server" content="">
+
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +24,7 @@
 <link rel="stylesheet" href="./css/app.css">
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" crossorigin="anonymous"></script>
 <script type="module" src="./js/app.js"></script>
 </head>
 
@@ -151,6 +157,16 @@
     </div>
 
     <p class="net-status" id="online-status" role="status"></p>
+
+    <details class="advanced">
+      <summary>Connection</summary>
+      <p class="hint-line" id="transport-note">Checking how to connect…</p>
+      <label class="field">
+        <span class="field-label">Room server (optional)</span>
+        <input id="server-url" class="input" placeholder="https://your-server.example" autocomplete="off" spellcheck="false">
+      </label>
+      <p class="panel__note">Leave this empty to play browser to browser with no server at all. Fill it in to route games through your own room server instead.</p>
+    </details>
   </div>
 </section>
 
