@@ -31,7 +31,14 @@ const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function normalise(url) {
   const u = String(url || '').trim();
   if (!u) return '';
-  return (/^https?:\/\//.test(u) ? u : 'https://' + u).replace(/\/+$/, '');
+  const withScheme = /^https?:\/\//.test(u) ? u : 'https://' + u;
+  // Reduce to the bare origin. Paste a whole page URL — invite links carry a
+  // ?room= query — and we'd otherwise dial that query at the socket layer.
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return '';
+  }
 }
 
 export function savedServer() {
@@ -63,17 +70,18 @@ export function configuredServer() {
     return normalise(q);
   }
   const stored = savedServer();
-  if (stored) return stored;
+  if (stored) return normalise(stored); // normalise on read too: storage may
+                                        // predate the rules, or be hand-edited
   const meta = document.querySelector('meta[name="gebeta-server"]')?.content;
   return normalise(meta);
 }
 
 /** Is there a Gebeta server at this origin? Cheap, and answers fast. */
-async function hasServer(origin) {
+async function hasServer(origin, ms = 2500) {
   if (!origin || location.protocol === 'file:') return false;
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 2500);
+    const timer = setTimeout(() => ctl.abort(), ms);
     const res = await fetch(origin + '/health', { signal: ctl.signal });
     clearTimeout(timer);
     if (!res.ok) return false;
@@ -116,21 +124,30 @@ export class Online {
     for (const fn of this.handlers[name] || []) fn(payload);
   }
 
-  /** Decide how we're connecting. Cached once answered. */
+  /**
+   * Decide how we're connecting. Cached once answered.
+   *
+   * A server is only ever used once it has proved it exists — an address that
+   * doesn't answer /health is ignored rather than dialled. Otherwise a stale
+   * or mistyped address leaves online play permanently broken while the socket
+   * layer retries into the void.
+   */
   async resolve() {
     if (this.transport) return this.transport;
     const explicit = configuredServer();
+    const candidate = explicit || location.origin;
 
-    if (explicit && window.io) {
-      this.serverUrl = explicit;
+    if (window.io && (await hasServer(candidate, explicit ? 5000 : 2500))) {
+      this.serverUrl = candidate;
       this.transport = 'server';
-    } else if (!explicit && window.io && (await hasServer(location.origin))) {
-      this.serverUrl = location.origin;
-      this.transport = 'server';
+      this.reason = explicit ? 'configured' : 'origin';
     } else if (window.Peer) {
       this.transport = 'direct';
-    } else if (explicit && !window.io) {
-      throw new Error('A server is set, but the realtime library did not load.');
+      this.reason = explicit ? 'server-silent' : 'no-server';
+    } else if (window.io && explicit) {
+      this.serverUrl = candidate;
+      this.transport = 'server';
+      this.reason = 'configured-unverified';
     } else {
       throw new Error('Neither connection method loaded. Check your network and reload.');
     }
@@ -140,9 +157,33 @@ export class Online {
   /** A sentence for the setup screen, so nobody has to guess. */
   async describe() {
     const t = await this.resolve();
-    return t === 'server'
-      ? `Through your server at ${this.serverUrl.replace(/^https?:\/\//, '')}.`
+    const host = (this.serverUrl || '').replace(/^https?:\/\//, '');
+    if (t === 'server') {
+      return this.reason === 'configured-unverified'
+        ? `Trying your server at ${host}.`
+        : `Through the room server at ${host}.`;
+    }
+    return this.reason === 'server-silent'
+      ? `No answer from ${configuredServer().replace(/^https?:\/\//, '')} — playing browser to browser instead.`
       : 'Browser to browser — no server involved.';
+  }
+
+  /** Swap a dead server link for a direct one, mid-flight. */
+  _fallback() {
+    if (this.transport !== 'server' || !window.Peer) return false;
+    try {
+      this.link?.dispose();
+    } catch {
+      /* nothing to salvage */
+    }
+    this.transport = 'direct';
+    this.reason = 'server-silent';
+    this.link = new DirectLink(this);
+    this.emit('message', {
+      kind: '',
+      text: 'The server did not answer — connecting browser to browser instead.',
+    });
+    return true;
   }
 
   async _make() {
@@ -154,7 +195,13 @@ export class Online {
 
   async create(name) {
     const link = await this._make();
-    const res = await link.create(cleanName(name));
+    let res;
+    try {
+      res = await link.create(cleanName(name));
+    } catch (err) {
+      if (!err?.transportFailure || !this._fallback()) throw err;
+      res = await this.link.create(cleanName(name));
+    }
     this.code = res.code;
     this.seat = res.seat;
     return res;
@@ -162,7 +209,15 @@ export class Online {
 
   async join(code, name) {
     const link = await this._make();
-    const res = await link.join(String(code).toUpperCase().trim(), cleanName(name));
+    const tidy = String(code).toUpperCase().trim();
+    let res;
+    try {
+      res = await link.join(tidy, cleanName(name));
+    } catch (err) {
+      // "No such room" is a real answer — only a dead transport gets retried.
+      if (!err?.transportFailure || !this._fallback()) throw err;
+      res = await this.link.join(tidy, cleanName(name));
+    }
     this.code = res.code;
     this.seat = res.seat;
     return res;
@@ -210,8 +265,8 @@ class ServerLink {
     return new Promise((resolve, reject) => {
       this.socket = window.io(this.url, {
         transports: ['websocket', 'polling'],
-        reconnectionAttempts: 6,
-        timeout: 45000,
+        reconnectionAttempts: 4,
+        timeout: 12000,
       });
       const slow = setTimeout(
         () => this.bus.emit('slow', 'Waking the server — free hosting takes a moment.'),
@@ -224,7 +279,10 @@ class ServerLink {
       });
       this.socket.on('connect_error', (err) => {
         clearTimeout(slow);
-        reject(new Error(err?.message || 'Could not reach the server.'));
+        this.socket?.close();
+        const wrapped = new Error(err?.message || 'Could not reach the server.');
+        wrapped.transportFailure = true;
+        reject(wrapped);
       });
     });
   }
@@ -250,7 +308,11 @@ class ServerLink {
 
   _ask(name, payload) {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('The server did not answer.')), 12000);
+      const timer = setTimeout(() => {
+        const err = new Error('The server did not answer.');
+        err.transportFailure = true;
+        reject(err);
+      }, 12000);
       this.socket.emit(name, payload, (res) => {
         clearTimeout(timer);
         if (res?.ok) resolve(res);

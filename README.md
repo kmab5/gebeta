@@ -121,16 +121,27 @@ the client reconnects with a token.
 
 ### Choosing a server
 
-No address is hardcoded. A server is looked for in this order:
+You almost certainly don't need one — leave the Connection panel empty and
+games run browser to browser.
+
+A configured address is **ignored unless it answers** `GET /health` with
+`{"ok":true}`. That check is deliberate: an address that doesn't respond gets
+skipped and play falls back to direct, rather than the socket layer retrying
+into the void and leaving online play broken. Whatever you type is also reduced
+to its bare origin, so pasting a full page or invite URL cannot leak a query
+string into the connection.
+
+A server is looked for in this order:
 
 1. `window.GEBETA_SERVER`, if something set it before the modules load
 2. `?server=https://...` in the URL, which is then remembered
 3. whatever you typed into the Connection panel (kept in local storage)
 4. `<meta name="gebeta-server">` in `index.html`, empty by default
-5. the page's own origin — but only if it answers `/health`
+5. the page's own origin
 
 A static host answers none of those, so it falls through to direct play on its
-own. Nothing to configure.
+own. Nothing to configure. Vercel logging a 404 for `/health` is that check
+working — it is how the game learns there is no server there.
 
 ### The catch with direct play
 

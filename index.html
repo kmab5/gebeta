@@ -163,9 +163,12 @@
       <p class="hint-line" id="transport-note">Checking how to connect…</p>
       <label class="field">
         <span class="field-label">Room server (optional)</span>
-        <input id="server-url" class="input" placeholder="https://your-server.example" autocomplete="off" spellcheck="false">
+        <span class="join-row">
+          <input id="server-url" class="input" placeholder="https://your-server.example" autocomplete="off" spellcheck="false">
+          <button class="ghost-btn" id="clear-server" type="button">Clear</button>
+        </span>
       </label>
-      <p class="panel__note">Leave this empty to play browser to browser with no server at all. Fill it in to route games through your own room server instead.</p>
+      <p class="panel__note">Leave this empty. Online play works with no server at all. Only fill this in if you are running the Node server in <code>server/</code> — and it is ignored unless it answers.</p>
     </details>
   </div>
 </section>

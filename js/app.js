@@ -542,11 +542,20 @@ function wire() {
   $('#online-name').addEventListener('change', (e) => prefs.set('name', e.target.value.trim()));
   const serverField = $('#server-url');
   serverField.value = savedServer();
-  serverField.addEventListener('change', (e) => {
-    saveServer(e.target.value);
+  const resetTransport = () => {
     app.net?.dispose();
     app.net = null;
     refreshTransport();
+  };
+  serverField.addEventListener('change', (e) => {
+    saveServer(e.target.value);
+    serverField.value = savedServer();
+    resetTransport();
+  });
+  $('#clear-server').addEventListener('click', () => {
+    saveServer('');
+    serverField.value = '';
+    resetTransport();
   });
   $('#create-room').addEventListener('click', async () => {
     const name = ($('#online-name').value || 'Player').trim().slice(0, 14);
