@@ -131,17 +131,20 @@ into the void and leaving online play broken. Whatever you type is also reduced
 to its bare origin, so pasting a full page or invite URL cannot leak a query
 string into the connection.
 
+Nothing is probed unless something claims a server exists. On a static host the
+game makes no connection check at all — it knows there is nothing to find.
+
 A server is looked for in this order:
 
 1. `window.GEBETA_SERVER`, if something set it before the modules load
 2. `?server=https://...` in the URL, which is then remembered
 3. whatever you typed into the Connection panel (kept in local storage)
 4. `<meta name="gebeta-server">` in `index.html`, empty by default
-5. the page's own origin
 
-A static host answers none of those, so it falls through to direct play on its
-own. Nothing to configure. Vercel logging a 404 for `/health` is that check
-working — it is how the game learns there is no server there.
+The Node server rewrites that meta tag to `self` as it serves the page, so a
+page served by a room server already knows one is there — no discovery request,
+no round trip. Served from anywhere else the tag stays empty and the game plays
+peer to peer. Nothing to configure either way.
 
 ### The catch with direct play
 

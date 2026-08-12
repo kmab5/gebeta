@@ -11,6 +11,7 @@
 
 import express from 'express';
 import http from 'node:http';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -32,6 +33,31 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
   pingTimeout: 25000,
+});
+
+/**
+ * Serve index.html with the server marker filled in.
+ *
+ * A page served by this process is, by definition, a page with a room server
+ * behind it — so it says so, and the client never has to go looking. Served
+ * from anywhere else the marker stays empty and the client plays peer to peer.
+ */
+const INDEX = path.join(ROOT, 'index.html');
+let indexCache = null;
+
+function indexHtml() {
+  if (indexCache) return indexCache;
+  indexCache = fs
+    .readFileSync(INDEX, 'utf8')
+    .replace(
+      /<meta name="gebeta-server" content="[^"]*">/,
+      '<meta name="gebeta-server" content="self">'
+    );
+  return indexCache;
+}
+
+app.get(['/', '/index.html'], (_req, res) => {
+  res.type('html').send(indexHtml());
 });
 
 app.use(express.static(ROOT, { extensions: ['html'] }));

@@ -59,21 +59,33 @@ export function saveServer(url) {
   }
 }
 
-/** An explicitly chosen server, or '' meaning "work it out". */
+function metaServer() {
+  return (document.querySelector('meta[name="gebeta-server"]')?.content || '').trim();
+}
+
+/**
+ * A server the player (or the deployment) chose, or '' meaning direct play.
+ *
+ * `trusted` means we don't need to go looking: the Node server rewrites the
+ * meta tag to `self` as it serves the page, so a page served BY a room server
+ * already knows one is there. Everything else is a claim that gets checked.
+ */
 export function configuredServer() {
   if (typeof window.GEBETA_SERVER === 'string' && window.GEBETA_SERVER) {
-    return normalise(window.GEBETA_SERVER);
+    return { url: normalise(window.GEBETA_SERVER), trusted: false };
   }
   const q = new URLSearchParams(location.search).get('server');
   if (q) {
     saveServer(q);
-    return normalise(q);
+    return { url: normalise(q), trusted: false };
   }
   const stored = savedServer();
-  if (stored) return normalise(stored); // normalise on read too: storage may
-                                        // predate the rules, or be hand-edited
-  const meta = document.querySelector('meta[name="gebeta-server"]')?.content;
-  return normalise(meta);
+  // Normalise on read too: storage may predate the rules, or be hand-edited.
+  if (stored) return { url: normalise(stored), trusted: false };
+
+  const meta = metaServer();
+  if (meta === 'self') return { url: location.origin, trusted: true };
+  return { url: normalise(meta), trusted: false };
 }
 
 /** Is there a Gebeta server at this origin? Cheap, and answers fast. */
@@ -134,18 +146,29 @@ export class Online {
    */
   async resolve() {
     if (this.transport) return this.transport;
-    const explicit = configuredServer();
-    const candidate = explicit || location.origin;
+    const { url, trusted } = configuredServer();
 
-    if (window.io && (await hasServer(candidate, explicit ? 5000 : 2500))) {
-      this.serverUrl = candidate;
+    // Nothing claims a server: go direct without touching the network. A
+    // static host would only answer a probe with a 404 in the console.
+    if (!url) {
+      if (!window.Peer) {
+        throw new Error('The direct-connection library did not load. Check your network and reload.');
+      }
+      this.transport = 'direct';
+      this.reason = 'no-server';
+      return this.transport;
+    }
+
+    if (window.io && (trusted || (await hasServer(url, 5000)))) {
+      this.serverUrl = url;
       this.transport = 'server';
-      this.reason = explicit ? 'configured' : 'origin';
+      this.reason = trusted ? 'self' : 'configured';
     } else if (window.Peer) {
       this.transport = 'direct';
-      this.reason = explicit ? 'server-silent' : 'no-server';
-    } else if (window.io && explicit) {
-      this.serverUrl = candidate;
+      this.reason = 'server-silent';
+      this.silentServer = url;
+    } else if (window.io) {
+      this.serverUrl = url;
       this.transport = 'server';
       this.reason = 'configured-unverified';
     } else {
@@ -164,7 +187,7 @@ export class Online {
         : `Through the room server at ${host}.`;
     }
     return this.reason === 'server-silent'
-      ? `No answer from ${configuredServer().replace(/^https?:\/\//, '')} — playing browser to browser instead.`
+      ? `No answer from ${(this.silentServer || '').replace(/^https?:\/\//, '')} — playing browser to browser instead.`
       : 'Browser to browser — no server involved.';
   }
 
